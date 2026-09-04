@@ -30,7 +30,7 @@ Logistics efficiency is the single greatest driver of customer review scores on 
 
 * **Root Cause: Warehouse Dispatch vs. Carrier Transit:** Decomposing fulfillment cycle times revealed that the primary bottleneck often stems from **seller dispatch and warehouse processing delays** (the gap between order approval and shipping carrier pickup) rather than the logistics carrier in transit. Delays in warehouse handoff consume the customer delivery buffer before transit even starts.
 
-![Warehouse Delay Bottleneck](newplot%20(13).png)
+![Warehouse Delay Bottleneck](newplot%20(11).png)
 
 ---
 
@@ -40,7 +40,7 @@ Analyzing order volume on an hourly cadence reveals strong diurnal consumer beha
 * **Daytime Peak Activity:** Purchasing momentum builds steadily throughout business hours, peaking in the afternoon and early evening.
 * **The "Night Drop":** Orders experience a sharp downward drop late at night and into the early morning hours, identifying clear operational windows where automated marketing and warehouse batch-processing should be scheduled.
 
-![Hourly Orders and Night Drop](newplot%20(8).png)
+![Hourly Orders and Night Drop](newplot%20(7).png)
 
 ---
 
