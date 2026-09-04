@@ -3,37 +3,48 @@
 ## Project Overview & Business Strategy
 This project provides an end-to-end exploratory and diagnostic data analysis of the Olist e-commerce ecosystem in Brazil, evaluating over 100,000 orders placed between 2016 and 2018. Unlike subscription businesses with continuous re-engagement loops, retail marketplaces like Olist contend with high customer acquisition costs coupled with low organic reorder frequencies. 
 
-Optimizing profitability requires analyzing geographic concentration, category economics, shipping performance, and segmented customer value.
+Optimizing profitability requires dissecting operational supply-chain bottlenecks, hourly purchasing patterns, geographic concentration, category economics, and segmented customer lifetime value.
 
 ---
 
 ## Technical Pipeline & Preprocessing
 
 * **Data Cleaning & Consolidation:** Cleaned and merged transactional schemas covering orders, order items, customer demographics, seller information, and product reviews.
-* **Timestamp Normalization:** Formatted operational dates to establish operational delivery timelines (purchase date, delivery approval, estimated arrival, and actual drop-off).
+* **Timestamp Normalization:** Formatted operational timestamps to establish precise fulfillment intervals: purchase approval, seller-to-carrier handoff (warehouse dispatch), carrier transit duration, and customer receipt.
 * **Statistical Outlier Detection (IQR Method):** 
   * Quantified extreme anomalies using the Interquartile Range ($IQR = Q_3 - Q_1$).
   * Flagged upper and lower outliers beyond the bounds $[Q_1 - 1.5 \times IQR, Q_3 + 1.5 \times IQR]$ across heavy-tailed numerical features (such as item prices, freight values, and product weights).
-* **Outlier Mitigation & Variance Stabilization:** Rather than simply trimming or dropping high-value outliers (which would distort legitimate premium revenue data), implemented **Log Transformations** (`np.log1p`) across heavily skewed financial features to compress variance, eliminate extreme skewness, and normalize distributions for modeling.
-* **Metric Formulation:** Engineered business-critical features including actual shipping duration, estimated error buffers, and customer-level order frequency metrics.
+* **Outlier Mitigation & Variance Stabilization:** Rather than trimming or dropping high-value outliers (which would distort legitimate premium revenue data), implemented **Log Transformations** (`np.log1p`) across heavily skewed financial features to stabilize variance, compress skewness, and normalize distributions for modeling.
+* **Feature Engineering:** Engineered operational SLA metrics (warehouse fulfillment latency, carrier transit lag, delivery delta against estimated deadline) alongside RFM transaction matrices.
 
 ---
 
 ## In-Depth Analysis & Visual Insights
 
-### 1. Delivery Latency & Customer Satisfaction Impact
-Logistics efficiency is the primary determinant of customer review scores on Olist.
+### 1. Delivery Latency & The Warehouse Bottleneck Root Cause
+Logistics efficiency is the single greatest driver of customer review scores on Olist.
 
-* **Performance Divergence:** Orders delivered early or on schedule maintain high satisfaction levels, averaging **4.3** and **4.2** rating points respectively.
-* **The Delayed Delivery Penalty:** When an order passes its estimated delivery date, customer sentiment collapses sharply to an average review score of **2.6**.
+* **Customer Rating Penalty:** Orders delivered on or before the estimated date maintain high satisfaction levels (**4.3** and **4.2** rating points). However, missing the deadline leads to an immediate rating collapse to an average score of **2.6**.
 
 ![Delivery Latency vs Satisfaction](newplot%20(12).png)
 
-* **Operational Takeaway:** Establishing regional distribution hubs and optimizing carrier transit SLAs in high-delay territories will yield immediate gains in merchant and platform reputation.
+* **Root Cause: Warehouse Dispatch vs. Carrier Transit:** Decomposing fulfillment cycle times revealed that the primary bottleneck often stems from **seller dispatch and warehouse processing delays** (the gap between order approval and shipping carrier pickup) rather than the logistics carrier in transit. Delays in warehouse handoff consume the customer delivery buffer before transit even starts.
+
+![Warehouse Delay Bottleneck](warehouse_delay.png)
 
 ---
 
-### 2. Geographic Market Concentration
+### 2. Diurnal Demand Dynamics & The "Night Drop" Phenomenon
+Analyzing order volume on an hourly cadence reveals strong diurnal consumer behavior:
+
+* **Daytime Peak Activity:** Purchasing momentum builds steadily throughout business hours, peaking in the afternoon and early evening.
+* **The "Night Drop":** Orders experience a sharp downward drop late at night and into the early morning hours, identifying clear operational windows where automated marketing and warehouse batch-processing should be scheduled.
+
+![Hourly Orders and Night Drop](night_drop.png)
+
+---
+
+### 3. Geographic Market Concentration
 Both order volume and revenue generation show extreme geographical clustering in southeastern Brazil.
 
 * **Volume Dominance:** São Paulo (SP) generated over 40,000 orders, followed by Rio de Janeiro (RJ) and Minas Gerais (MG).
@@ -49,7 +60,7 @@ Both order volume and revenue generation show extreme geographical clustering in
 
 ---
 
-### 3. Product Category Dynamics & High-Ticket Orders
+### 4. Product Category Dynamics & High-Ticket Orders
 Top grossing merchandise categories combine essential repeat consumer staples with high-margin discretionary purchases.
 
 * **Top Revenue Drivers:** **Health & Beauty** leads aggregate sales at **$1.23M**, followed closely by **Watches & Gifts** (**$1.17M**) and **Bed, Bath & Table** (**$1.02M**).
@@ -61,7 +72,7 @@ Top grossing merchandise categories combine essential repeat consumer staples wi
 
 ---
 
-### 4. Seller Performance & Concentration Risk
+### 5. Seller Performance & Concentration Risk
 Revenue generation across independent merchants shows high vendor dependence:
 
 * **Top Merchant Inflows:** The leading marketplace seller generated **$227k**, with the second-highest vendor reaching **$218k**.
@@ -71,7 +82,7 @@ Revenue generation across independent merchants shows high vendor dependence:
 
 ---
 
-### 5. Revenue Trajectory & Seasonality
+### 6. Revenue Trajectory & Seasonality
 Analyzing gross sales trajectory from late 2016 through mid-2018 shows exponential early-stage scaling followed by consistent transaction volume.
 
 * **Growth Phase:** Sales expanded rapidly from under $200k monthly run-rate in Q1 2017 to peak monthly revenue approaching **$1.0M** in late 2017 (Black Friday period).
@@ -81,7 +92,7 @@ Analyzing gross sales trajectory from late 2016 through mid-2018 shows exponenti
 
 ---
 
-### 6. Comprehensive RFM Customer Segmentation
+### 7. Comprehensive RFM Customer Segmentation
 Customers were evaluated across three foundational metrics:
 * **Recency ($R$):** Days since the customer's last purchase relative to the dataset benchmark date.
 * **Frequency ($F$):** Total transaction count completed by the customer.
@@ -109,8 +120,9 @@ Examining the monetary share of each segment yields actionable business insights
 
 ## Actionable Business Recommendations
 
+* **Warehouse Fulfillment SLAs:** Enforce strict seller fulfillment lead times (dispatch SLA < 24-48 hours) to prevent orders entering transit with depleted buffer time.
+* **Time-Targeted Marketing:** Align promotional flash sales and push notifications before the evening **Night Drop** window to maximize daytime conversion rates.
 * **Automated Win-Back Triggers:** Launch targeted, automated email re-engagement promotions specifically calibrated for the **At Risk** and **Lost / Hibernating** groups, who represent over 31% of historical cash flows.
-* **Carrier SLA Re-Negotiation:** Impose penalty thresholds for shipping carriers that exceed promised transit schedules, preventing the ratings collapse observed in late deliveries.
 * **Southeastern Logistics Hubs:** Invest in micro-fulfillment centers in SP, RJ, and MG to reduce fulfillment overhead and capitalize on high order densities.
 * **Cross-Selling Top Categories:** Implement checkout bundling between leading volume products (Bed, Bath & Table) and premium items (Watches & Gifts) to lift Average Order Value (AOV).
 
@@ -119,4 +131,5 @@ Examining the monetary share of each segment yields actionable business insights
 ## Technologies Used
 * **Data Manipulation & Analysis:** Python (`pandas`, `numpy`)
 * **Visualization Suite:** Plotly Express & Graph Objects, Seaborn, Matplotlib
+* **Framework:** RFM Scoring, Outlier Diagnostics via IQR, Log Transforms (`np.log1p`)Objects, Seaborn, Matplotlib
 * **Framework:** RFM Scoring, Outlier Diagnostics via IQR, Log Transforms (`np.log1p`)
